@@ -70,6 +70,7 @@ module YeSQL
       def binds
         ::YeSQL::Bindings::Extractor.new(bindings: named_bindings).call.tap do |extractor|
           break statement_binds(extractor).sort_by(&:last)
+                                          .uniq
                                           .map(&:first)
                                           .flatten
                                           .each_slice(2)
