@@ -41,6 +41,20 @@ describe ::YeSQL::Query::Performer do
       described_class.new(bind_statement: bind_statement, file_path: file_path, bindings: bindings)
     end
 
+    describe 'binds' do
+      context 'when a positional bind is used more than once' do
+        let(:file_path) { 'article_stats/in_site' }
+        let(:site) { 'af' }
+        let(:bindings) { { site: site } }
+
+        before { create_sql_file(file_path, 'SELECT :site, :site') }
+
+        it 'executes the query without repeated binds' do
+          expect(subject.call).to eq([[site, site]])
+        end
+      end
+    end
+
     describe 'SELECT' do
       describe 'IN' do
         let(:file_path) { 'article_stats/in_site' }
