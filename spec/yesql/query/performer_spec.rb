@@ -53,6 +53,30 @@ describe ::YeSQL::Query::Performer do
           expect(subject.call).to eq([[site, site]])
         end
       end
+
+      context 'with dozens of binds' do
+        let(:created_at) { '2020-01-01' }
+        let(:file_path) { 'article_stats/by_id' }
+        let(:site) { 'af' }
+        let(:bindings) do
+          { site: site, ids: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], created_at: created_at }
+        end
+
+        before do
+          create_sql_file(file_path, <<~SQL)
+            SELECT id, :site
+            FROM article_stats
+            WHERE id IN (:ids)
+            OR created_at > :created_at::DATE
+          SQL
+
+          article_stat
+        end
+
+        it 'orders them by their integer value - otherwise it mixes binds which breaks when casting' do
+          expect(subject.call).to eq([[article_stat.id, site]])
+        end
+      end
     end
 
     describe 'SELECT' do

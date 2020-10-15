@@ -67,15 +67,19 @@ module YeSQL
         @query_result ||= connection.exec_query(bind_statement, file_path, binds, prepare: prepare)
       end
 
+      def extractor
+        ::YeSQL::Bindings::Extractor.new(bindings: named_bindings).call
+      end
+
+      # TODO: move this somewhere else.
       def binds
-        ::YeSQL::Bindings::Extractor.new(bindings: named_bindings).call.tap do |extractor|
-          break statement_binds(extractor).sort_by(&:last)
-                                          .uniq
-                                          .map(&:first)
-                                          .flatten
-                                          .each_slice(2)
-                                          .to_a
-        end
+        statement_binds(extractor)
+          .sort_by { |_, position| position.tr('$', '').to_i }
+          .uniq
+          .map(&:first)
+          .flatten
+          .each_slice(2)
+          .to_a
       end
     end
   end
