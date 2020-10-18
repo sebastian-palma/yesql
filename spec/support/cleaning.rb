@@ -2,6 +2,10 @@
 
 module YeSQL
   module Cleaning
+    def remove_sql_path_files
+      FileUtils.rm_rf(Dir["#{::YeSQL.config.path}/*"])
+    end
+
     def remove_path
       FileUtils.rm_rf(Dir[::YeSQL.config.path])
     end
