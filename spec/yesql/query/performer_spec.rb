@@ -12,11 +12,7 @@ describe ::YeSQL::Query::Performer do
 
         run_command('rails g model article_stat logdate:date pageviews:integer site --force')
         run_command('rake db:migrate')
-
-        ActiveRecord::Base.connection_pool.disconnect!
       end
-
-      ArticleStat.reset_column_information
     end
 
     before do
@@ -168,36 +164,43 @@ describe ::YeSQL::Query::Performer do
 
       describe '`prepare` option' do
         let(:file_path) { 'article_stats/by_site' }
-        let(:prepared_statements) do
-          ActiveRecord::Base.connection.execute(
-            'select name, statement from pg_prepared_statements'
-          ).values
-        end
+
+        before { ActiveRecord::Base.connection.execute('DEALLOCATE prepare all') }
 
         context 'when `false` - or nothing given' do
-          it 'does not create a prepared statement' do
+          before do
             described_class.new(
               bind_statement: bind_statement,
               file_path: file_path,
               bindings: bindings
             ).call
-            expect(prepared_statements).to eq([])
+          end
+
+          it 'does not create a prepared statement' do
+            expect(
+              ActiveRecord::Base.connection.execute(
+                'SELECT * FROM pg_prepared_statements'
+              ).values
+            ).to eq([])
           end
         end
 
         context 'when `true`' do
-          it 'creates a prepared statement with the content of `file_path`' do
+          before do
             described_class.new(
               bind_statement: bind_statement,
               file_path: file_path,
               bindings: bindings,
               prepare: true
             ).call
-            # "a1" is the name ActiveRecord gives to the
-            # 1st prepared statement in the transaction
-            expect(prepared_statements).to(
-              eq([['a1', ::YeSQL::Bindings::Binder.bind_statement(file_path, bindings)]])
-            )
+          end
+
+          it 'creates a prepared statement with the content of `file_path`' do
+            expect(
+              ActiveRecord::Base.connection.execute(
+                'SELECT statement FROM pg_prepared_statements'
+              ).values
+            ).to eq([[::YeSQL::Bindings::Binder.bind_statement(file_path, bindings)]])
           end
         end
       end
@@ -267,33 +270,6 @@ describe ::YeSQL::Query::Performer do
         expect(subject.call).to eq([[article_stat.id, article_stat.pageviews, article_stat.site]])
         expect(article_stat.pageviews).to eq(pageviews)
         expect(article_stat.site).to eq(site)
-      end
-    end
-
-    describe 'UPDATE' do
-      let(:file_path) { 'article_stats/update_pageviews' }
-      let(:id) { rand(100..999) }
-      let(:pageviews) { 1000 }
-      let(:site) { 'nl' }
-      let(:exp) { 1.5 }
-      let(:pageviews_update) { (pageviews * 1.5).ceil }
-      let(:bindings) { { exp: exp, site: site } }
-      let!(:article_stat) do
-        ArticleStat.create(site: site, logdate: '2020-08-01', pageviews: pageviews)
-      end
-
-      before do
-        create_sql_file(file_path, <<~SQL)
-          UPDATE article_stats
-            SET pageviews = ROUND(pageviews::decimal * :exp)
-            WHERE site = :site
-            RETURNING pageviews;
-        SQL
-      end
-
-      it 'updates the rows and returns the columns from the RETURNING clause' do
-        expect(subject.call).to eq([[pageviews_update]])
-        expect(article_stat.reload.pageviews).to eq(pageviews_update)
       end
     end
   end

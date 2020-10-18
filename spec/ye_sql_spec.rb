@@ -4,8 +4,8 @@ require 'spec_helper'
 require 'yesql/query/performer'
 
 describe ::YeSQL, :minimalpg do
-  before(:all) do
-    on_minimal(:pg) { create_article_stats_by_site }
+  before do
+    remove_sql_path_files
   end
 
   after(:all) do
@@ -20,7 +20,9 @@ describe ::YeSQL, :minimalpg do
     let(:statement) { "SELECT * FROM pg_prepared_statements;\n" }
 
     before do
-      described_class.config.path = 'app/queries'
+      described_class.configure do |config|
+        config.path = 'app/queries'
+      end
       create_sql_file('get_current_time', statement)
     end
 
@@ -39,6 +41,8 @@ describe ::YeSQL, :minimalpg do
     let(:bindings) { { from_date: '2020-02-01', current_site: 'af', site: 'cl' } }
     let(:cache) { { expires_in: 30.minutes } }
     let(:dummy) { Class.new { include YeSQL } }
+
+    before { create_article_stats_by_site }
 
     it 'invokes ::YeSQL::Query::Performer.new(...).call if no exceptions raised' do
       expect(::YeSQL::Query::Performer).to(
@@ -59,8 +63,9 @@ describe ::YeSQL, :minimalpg do
     describe '`file_path` argument' do
       context 'when the given file does not exist' do
         let(:file_path) { 'nonexisting_file' }
+        let(:different_sql_file) { 'a_different_one' }
 
-        before { create_sql_file('another_one', "SELECT * FROM users;\n") }
+        before { create_sql_file(different_sql_file, "SELECT * FROM users;\n") }
 
         it do
           expect { dummy.new.YeSQL(file_path) }.to raise_error(NotImplementedError, <<~MSG)
@@ -70,7 +75,7 @@ describe ::YeSQL, :minimalpg do
             Available SQL files are:
 
             - app/yesql/article_stats/by_site.sql
-            - app/yesql/another_one.sql
+            - app/yesql/#{different_sql_file}.sql
 
           MSG
         end

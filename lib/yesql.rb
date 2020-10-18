@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'dry-configurable'
 require 'pry'
 require 'yesql/version'
+require 'yesql/config/configuration'
 require 'yesql/query/performer'
 require 'yesql/errors/cache_expiration_error'
 require 'yesql/errors/file_path_does_not_exist_error'
@@ -11,14 +11,11 @@ require 'yesql/errors/output_argument_error'
 require 'yesql/bindings/binder'
 
 module YeSQL
-  extend ::Dry::Configurable
-
+  include ::YeSQL::Config
   include ::YeSQL::Errors::CacheExpirationError
   include ::YeSQL::Errors::FilePathDoesNotExistError
   include ::YeSQL::Errors::NoBindingsProvidedError
   include ::YeSQL::Errors::OutputArgumentError
-
-  setting :path, 'app/yesql'
 
   BIND_REGEX = /(?<!:):(\w+)(?=\b)/.freeze
 
