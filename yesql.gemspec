@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
   spec.add_dependency 'rails', '>= 5.0'
+  spec.add_development_dependency 'mysql2', '~> 0.5.3'
   spec.add_development_dependency 'pg', '>= 0.18'
   spec.add_development_dependency 'pry', '~> 0.13.1'
   spec.add_development_dependency 'rspec', '~> 3.9.0'

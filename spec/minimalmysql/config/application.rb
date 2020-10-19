@@ -8,9 +8,9 @@ require "active_record/railtie"
 
 Bundler.require(*Rails.groups)
 
-module Minimalpg
+module Minimalmysql
   class Application < Rails::Application
+    config.load_defaults 6.0
     config.api_only = true
-    config.eager_load = false
   end
 end

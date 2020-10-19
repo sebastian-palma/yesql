@@ -2,9 +2,11 @@
 
 require 'yesql'
 
-module YeSQL
+module ::YeSQL
   module Bindings
     class Extract
+      include ::YeSQL::Common::Adapter
+
       def initialize(indexed_bindings, hash, index, value)
         @indexed_bindings = indexed_bindings
         @hash = hash
@@ -19,9 +21,15 @@ module YeSQL
       end
 
       def bind_vars
-        return "$#{last_val}" unless array?
+        if mysql?
+          return '?' unless array?
 
-        value.map.with_index(bind_index) { |_, i| "$#{i}" }.join(', ')
+          Array.new(value.size, '?').join(', ')
+        elsif pg?
+          return "$#{last_val}" unless array?
+
+          value.map.with_index(bind_index) { |_, i| "$#{i}" }.join(', ')
+        end
       end
 
       def last_val
