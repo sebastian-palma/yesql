@@ -19,6 +19,7 @@ describe ::YeSQL::Query::Performer, :mysql do
     end
 
     before do
+      stub_const('::Rails::VERSION::MAJOR', 5)
       ActiveRecord::Base.connection.begin_transaction(joinable: false)
     end
 
@@ -30,7 +31,7 @@ describe ::YeSQL::Query::Performer, :mysql do
       on_minimal(:mysql) { undo_model_changes }
     end
 
-    let(:bindings) { { from_date: '2020-02-01', current_site: 'af', site: 'cl' } }
+    let(:bindings) { { from_date: '2021-02-01', current_site: 'af', site: 'cl' } }
     let(:bind_statement) { ::YeSQL::Bindings::Binder.bind_statement(file_path, bindings) }
     let(:article_stat) do
       ArticleStat.create(site: bindings[:site], logdate: bindings[:from_date], pageviews: 123)
@@ -46,7 +47,9 @@ describe ::YeSQL::Query::Performer, :mysql do
         let(:site) { 'af' }
         let(:bindings) { { site: site } }
 
-        before { create_sql_file(file_path, 'SELECT :site, :site') }
+        before do
+          create_sql_file(file_path, 'SELECT :site, :site')
+        end
 
         it 'executes the query with repeated binds' do
           expect(subject.call).to eq([[site, site]])
@@ -68,7 +71,6 @@ describe ::YeSQL::Query::Performer, :mysql do
             WHERE id IN (:ids)
             OR created_at > CAST(:created_at AS DATE)
           SQL
-
           article_stat
         end
 
@@ -168,6 +170,8 @@ describe ::YeSQL::Query::Performer, :mysql do
       describe '`prepare` option' do
         let(:file_path) { 'article_stats/by_site' }
 
+        # Using mysql2's `prepare` and `execute` always creates
+        # a prepared statement, no matters the option given.
         context 'when `false` - or nothing given' do
           it 'does not create a prepared statement' do
             expect {
@@ -176,11 +180,11 @@ describe ::YeSQL::Query::Performer, :mysql do
                 file_path: file_path,
                 bindings: bindings
               ).call
-            }.not_to change {
+            }.to change {
               ActiveRecord::Base.connection.exec_query(<<~SQL).first['count']
                 SELECT COUNT(*) AS count FROM performance_schema.prepared_statements_instances
               SQL
-            }
+            }.by(1)
           end
         end
 

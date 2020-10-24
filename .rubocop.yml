@@ -1,0 +1,8 @@
+require: rubocop-rspec
+
+RSpec/FilePath:
+  Exclude:
+    - spec/**/*_spec.rb
+
+RSpec/NestedGroups:
+  Enabled: False

@@ -20,14 +20,24 @@ RSpec.configure do |config|
   config.order = :random
 
   config.around(:each, pg: true) do |example|
-    on_minimal(:pg) do
-      example.run
-    end
+    on_minimal(:pg) { example.run }
   end
 
   config.around(:each, mysql: true) do |example|
-    on_minimal(:mysql) do
-      example.run
-    end
+    on_minimal(:mysql) { example.run }
+  end
+
+  config.before(:each, rails5: true) do
+    stub_const('::Rails::VERSION::MAJOR', 5)
+  end
+
+  config.before(:each, mysql_adapter: true) do
+    allow(subject).to receive(:mysql?).and_return(true)
+    allow(subject).to receive(:pg?).and_return(false)
+  end
+
+  config.before(:each, pg_adapter: true) do
+    allow(subject).to receive(:mysql?).and_return(false)
+    allow(subject).to receive(:pg?).and_return(true)
   end
 end

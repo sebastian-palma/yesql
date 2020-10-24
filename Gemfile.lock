@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    yesql (0.1.4)
+    yesql (0.1.5)
       rails (>= 5.0)
 
 GEM
