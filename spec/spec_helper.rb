@@ -4,8 +4,7 @@ ENV['RAILS_ENV'] = 'test'
 
 require 'yesql'
 require 'open3'
-
-require File.expand_path("#{File.dirname(__FILE__)}/minimalpg/config/environment", __dir__)
+require 'pry'
 
 require 'support/access'
 require 'support/cleaning'
@@ -20,7 +19,15 @@ RSpec.configure do |config|
 
   config.order = :random
 
-  config.around(:each, minimalpg: true) do |example|
-    on_minimal(:pg) { example.run }
+  config.around(:each, pg: true) do |example|
+    on_minimal(:pg) do
+      example.run
+    end
+  end
+
+  config.around(:each, mysql: true) do |example|
+    on_minimal(:mysql) do
+      example.run
+    end
   end
 end

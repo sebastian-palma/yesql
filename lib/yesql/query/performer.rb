@@ -3,6 +3,7 @@
 require 'yesql'
 require 'forwardable'
 require 'yesql/bindings/utils'
+require 'yesql/common/adapter'
 
 module YeSQL
   module Query
@@ -10,6 +11,7 @@ module YeSQL
       extend Forwardable
 
       include ::YeSQL::Bindings::Utils
+      include ::YeSQL::Common::Adapter
 
       # rubocop:disable Metrics/ParameterLists
       def initialize(bind_statement:,
@@ -74,8 +76,8 @@ module YeSQL
       # TODO: move this somewhere else.
       def binds
         statement_binds(extractor)
-          .sort_by { |_, position| position.tr('$', '').to_i }
-          .uniq
+          .sort_by { |_, position| position.to_s.tr('$', '').to_i }
+          .tap { |x| break(mysql? ? x : x.uniq) }
           .map(&:first)
           .flatten
           .each_slice(2)

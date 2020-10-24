@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'pry'
 require 'yesql/version'
 require 'yesql/config/configuration'
 require 'yesql/query/performer'

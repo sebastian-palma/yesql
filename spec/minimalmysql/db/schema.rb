@@ -10,18 +10,6 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_18_110900) do
-
-  # These are extensions that must be enabled in order to support this database
-  enable_extension "pg_stat_statements"
-  enable_extension "plpgsql"
-
-  create_table "article_stats", force: :cascade do |t|
-    t.date "logdate"
-    t.integer "pageviews"
-    t.string "site"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-  end
+ActiveRecord::Schema.define(version: 2020_10_22_113147) do
 
 end

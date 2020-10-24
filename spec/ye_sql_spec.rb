@@ -3,14 +3,9 @@
 require 'spec_helper'
 require 'yesql/query/performer'
 
-describe ::YeSQL, :minimalpg do
-  before do
-    remove_sql_path_files
-  end
-
-  after(:all) do
-    on_minimal(:pg) { remove_generated_files }
-  end
+describe ::YeSQL, :pg do
+  before { remove_sql_path_files }
+  after { remove_generated_files }
 
   it 'test that it has a version_number' do
     expect(described_class::VERSION).not_to be_nil
@@ -20,9 +15,7 @@ describe ::YeSQL, :minimalpg do
     let(:statement) { "SELECT * FROM pg_prepared_statements;\n" }
 
     before do
-      described_class.configure do |config|
-        config.path = 'app/queries'
-      end
+      described_class.configure { |config| config.path = 'app/queries' }
       create_sql_file('get_current_time', statement)
     end
 

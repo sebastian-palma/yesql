@@ -70,7 +70,6 @@ YeSQL('top_10_users_in_x_country', { country: 'Cuba', country_id: 1, limit: 6 })
 ```
 
 - If the query doesn't have bindings, but they're provided they're just omitted.
-TODO: update this with link to the error.
 - If the query has bindings, but nothing is provided, it raises a `NotImplementedError` exception.
 
 
@@ -145,21 +144,21 @@ YeSQL('users', cache: { expires_in: 1.hour })
 
 ## Configuration
 
-For default `YeSQL` looks for the _.sql_ files defined under the `app/yesql/` folder but you can update it to use any folder you need. For that you can create a Ruby file under the `config/initializers/` folder as:
+For default `YeSQL` looks for the _.sql_ files defined under the `app/yesql/` folder but you can update it to use any folder you need. For that you can create a Ruby file under the `config/initializers/` with the following content:
 
 ```ruby
-YeSQL.config.path = 'path'
+::YeSQL.configure { |config| config.path = 'path' }
 ```
 
 After saving the file and restarting the server the files are going to be read from the given folder.
 
-You can check at anytime what's the configuration path by inspecting the YeSQL `config` object:
+You can check at anytime what's the configuration path by inspecting the ::YeSQL `config` object:
 
 ```ruby
-YeSQL.config
-# <Dry::Configurable::Config values={:path=>"path"}>
-Yesql.config.path
-# "path"
+::YeSQL.config
+# => #<YeSQL::Config::Configuration:0x00007feea1aa2ef8 @path="app/yesql">
+::YeSQL.config.path
+# => "app/yesql"
 ```
 
 
@@ -167,7 +166,7 @@ Yesql.config.path
 
 - Clone the repository.
 - Install the gem dependencies.
-- Make sure to create the database used in the dummy Rails application in the spec/ folder.
+- Make sure to create both databases used in the dummy Rails applications (mysql, pg) in the spec/ folder.
 - Run the tests.
 
 ## Contributing
