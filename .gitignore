@@ -1,1 +1,4 @@
-spec/minimalpg/log/test.log
+spec/minimalpg/log/*
+spec/minimalmysql/log/*
+spec/minimalpg/db/*
+spec/minimalmysql/db/*

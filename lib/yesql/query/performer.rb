@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
 require 'yesql'
-require 'forwardable'
 require 'yesql/bindings/utils'
 require 'yesql/common/adapter'
+require 'yesql/bindings/transformed'
+require 'yesql/query/result'
+require 'yesql/query/transform_result'
+require 'yesql/params/output'
 
 module YeSQL
   module Query
     class Performer
-      extend Forwardable
-
       include ::YeSQL::Bindings::Utils
-      include ::YeSQL::Common::Adapter
 
       # rubocop:disable Metrics/ParameterLists
       def initialize(bind_statement:,
@@ -23,11 +23,10 @@ module YeSQL
         @bind_statement = bind_statement
         @cache = cache
         @cache_key = cache[:key] || file_path
-        @connection = ActiveRecord::Base.connection
         @expires_in = cache[:expires_in]
         @file_path = file_path
         @named_bindings = bindings.transform_keys(&:to_sym)
-        @output = output
+        @output = ::YeSQL::Params::Output.new(output)
         @prepare = prepare
       end
       # rubocop:enable Metrics/ParameterLists
@@ -43,7 +42,6 @@ module YeSQL
       attr_reader :bind_statement,
                   :cache,
                   :cache_key,
-                  :connection,
                   :expires_in,
                   :file_path,
                   :named_bindings,
@@ -51,37 +49,24 @@ module YeSQL
                   :prepare,
                   :rows
 
-      def_delegator(:query_result, :columns)
-      private :columns
-      def_delegator(:query_result, :rows)
-      private :rows
-
       def modified_output
         @modified_output ||=
-          begin
-            return query_result.public_send(output) if %w[columns rows].include?(output.to_s)
-
-            columns.map(&:to_sym).tap { |cols| break rows.map { |row| cols.zip(row).to_h } }
-          end
+          ::YeSQL::Query::TransformResult.new(output: output, result: query_result).call
       end
 
       def query_result
-        @query_result ||= connection.exec_query(bind_statement, file_path, binds, prepare: prepare)
+        @query_result ||= ::YeSQL::Query::Result.new(binds: binds,
+                                                     bind_statement: bind_statement,
+                                                     file_path: file_path,
+                                                     prepare: prepare).call
       end
 
       def extractor
         ::YeSQL::Bindings::Extractor.new(bindings: named_bindings).call
       end
 
-      # TODO: move this somewhere else.
       def binds
-        statement_binds(extractor)
-          .sort_by { |_, position| position.to_s.tr('$', '').to_i }
-          .tap { |x| break(mysql? ? x : x.uniq) }
-          .map(&:first)
-          .flatten
-          .each_slice(2)
-          .to_a
+        ::YeSQL::Bindings::Transformed.new(statement_binds: statement_binds(extractor)).call
       end
     end
   end
