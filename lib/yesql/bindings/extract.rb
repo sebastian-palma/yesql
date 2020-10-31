@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'yesql'
+require 'yesql/common/adapter'
 
 module ::YeSQL
   module Bindings

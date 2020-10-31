@@ -32,9 +32,9 @@ module YeSQL
       # rubocop:enable Metrics/ParameterLists
 
       def call
-        return modified_output if cache.empty?
+        return transformed_result if cache.empty?
 
-        Rails.cache.fetch(cache_key, expires_in: expires_in) { modified_output }
+        Rails.cache.fetch(cache_key, expires_in: expires_in) { transformed_result }
       end
 
       private
@@ -49,8 +49,8 @@ module YeSQL
                   :prepare,
                   :rows
 
-      def modified_output
-        @modified_output ||=
+      def transformed_result
+        @transformed_result ||=
           ::YeSQL::Query::TransformResult.new(output: output, result: query_result).call
       end
 
@@ -61,12 +61,12 @@ module YeSQL
                                                      prepare: prepare).call
       end
 
-      def extractor
-        ::YeSQL::Bindings::Extractor.new(bindings: named_bindings).call
-      end
-
       def binds
         ::YeSQL::Bindings::Transformed.new(statement_binds: statement_binds(extractor)).call
+      end
+
+      def extractor
+        ::YeSQL::Bindings::Extractor.new(bindings: named_bindings).call
       end
     end
   end

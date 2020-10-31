@@ -2,10 +2,10 @@
 
 module YeSQL
   module QueryFiles
-    def create_sql_file(path, statement)
+    def create_sql_file(path, sql)
       Pathname("#{::YeSQL.config.path}/#{path}.sql").tap do |pathname|
         pathname.dirname.mkpath
-        pathname.write(statement)
+        pathname.write(sql)
       end
     end
 

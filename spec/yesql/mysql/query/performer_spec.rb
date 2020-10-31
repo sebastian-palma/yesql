@@ -2,8 +2,9 @@
 
 require 'spec_helper'
 require 'yesql/query/performer'
-require 'yesql/bindings/binder'
-require_relative '../../../minimalmysql/config/environment'
+require 'yesql/statement'
+
+require "#{RSPEC_ROOT}/minimalmysql/config/environment"
 
 describe ::YeSQL::Query::Performer, :mysql do
   describe '.call' do
@@ -31,7 +32,7 @@ describe ::YeSQL::Query::Performer, :mysql do
     end
 
     let(:bindings) { { from_date: '2020-02-01', current_site: 'af', site: 'cl' } }
-    let(:bind_statement) { ::YeSQL::Bindings::Binder.bind_statement(file_path, bindings) }
+    let(:bind_statement) { ::YeSQL::Statement.new(bindings, file_path) }
     let(:article_stat) do
       ArticleStat.create(site: bindings[:site], logdate: bindings[:from_date], pageviews: 123)
     end
@@ -263,6 +264,46 @@ describe ::YeSQL::Query::Performer, :mysql do
         it 'inserts the data and returns the columns from the RETURNING clause' do
           expect(subject.call).to eq([])
           expect(ArticleStat.pluck(:id, :pageviews, :site)).to eq([[id, pageviews, site]])
+        end
+      end
+    end
+
+    describe 'MySQL views' do
+      before { create_sql_file(file_path, sql) }
+
+      after { ActiveRecord::Base.connection.execute('DROP VIEW tmp;').to_a }
+
+      let(:file_path) { 'article_stats/temporary_table' }
+      let(:tmp) { ActiveRecord::Base.connection.execute('SELECT * FROM tmp;').to_a }
+
+      context 'with binds' do
+        subject(:result) do
+          described_class.new(bind_statement: statement, file_path: file_path, bindings: bindings)
+                         .call
+        end
+
+        let(:bindings) { { interval: interval } }
+        let(:interval) { 2 }
+        let(:statement) { ::YeSQL::Statement.new(bindings, file_path) }
+        let(:sql) { 'CREATE VIEW tmp AS SELECT CAST(CURDATE() - INTERVAL :interval DAY AS CHAR);' }
+
+        it do
+          expect(result).to eq([])
+          expect(tmp).to eq([[(Date.today - interval).to_s]])
+        end
+      end
+
+      context 'without binds' do
+        subject(:result) do
+          described_class.new(bind_statement: bind_statement, file_path: file_path).call
+        end
+
+        let(:bind_statement) { ::YeSQL::Statement.new(file_path) }
+        let(:sql) { 'CREATE VIEW tmp AS SELECT CAST(CURDATE() - INTERVAL 1 DAY AS CHAR);' }
+
+        it do
+          expect(result).to eq([])
+          expect(tmp).to eq([[(Date.today - 1).to_s]])
         end
       end
     end

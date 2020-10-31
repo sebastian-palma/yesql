@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'yesql/statement'
 require 'yesql/version'
 require 'yesql/config/configuration'
 require 'yesql/query/performer'
@@ -7,7 +8,6 @@ require 'yesql/errors/cache_expiration_error'
 require 'yesql/errors/file_path_does_not_exist_error'
 require 'yesql/errors/no_bindings_provided_error'
 require 'yesql/errors/output_argument_error'
-require 'yesql/bindings/binder'
 
 module YeSQL
   include ::YeSQL::Config
@@ -40,7 +40,7 @@ module YeSQL
   def execute(bindings, cache, file_path, output, options)
     ::YeSQL::Query::Performer.new(
       bindings: bindings,
-      bind_statement: ::YeSQL::Bindings::Binder.bind_statement(file_path, bindings),
+      bind_statement: ::YeSQL::Statement.new(bindings, file_path),
       cache: cache,
       file_path: file_path,
       output: output,

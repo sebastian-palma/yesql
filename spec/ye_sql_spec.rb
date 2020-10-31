@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'yesql/statement'
 require 'yesql/query/performer'
+
+require_relative "#{RSPEC_ROOT}/minimalpg/config/environment"
 
 describe ::YeSQL, :pg do
   before { remove_sql_path_files }
+
   after { remove_generated_files }
 
   it 'test that it has a version_number' do
@@ -34,14 +38,17 @@ describe ::YeSQL, :pg do
     let(:bindings) { { from_date: '2020-02-01', current_site: 'af', site: 'cl' } }
     let(:cache) { { expires_in: 30.minutes } }
     let(:dummy) { Class.new { include YeSQL } }
+    let(:connection) { ActiveRecord::Base.connection }
+    let(:statement) { ::YeSQL::Statement.new(bindings, file_path) }
 
     before { create_article_stats_by_site }
 
     it 'invokes ::YeSQL::Query::Performer.new(...).call if no exceptions raised' do
+      expect(::YeSQL::Statement).to receive(:new).with(bindings, file_path).and_return(statement)
       expect(::YeSQL::Query::Performer).to(
         receive(:new).with(
           bindings: bindings,
-          bind_statement: ::YeSQL::Bindings::Binder.bind_statement(file_path, bindings),
+          bind_statement: statement,
           cache: cache,
           file_path: file_path,
           output: :rows,

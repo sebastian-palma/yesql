@@ -11,11 +11,23 @@ require 'support/cleaning'
 require 'support/commands'
 require 'support/query_files'
 
+require './spec/yesql/shared/statement'
+
+class Object
+  def d
+    tap { |obj| p obj }
+  end
+end
+
+RSPEC_ROOT = File.dirname(__FILE__).freeze
+
 RSpec.configure do |config|
   config.include ::YeSQL::Access
   config.include ::YeSQL::Cleaning
   config.include ::YeSQL::Commands
   config.include ::YeSQL::QueryFiles
+
+  config.shared_context_metadata_behavior = :apply_to_host_groups
 
   config.order = :random
 
@@ -39,5 +51,11 @@ RSpec.configure do |config|
   config.before(:each, pg_adapter: true) do
     allow(subject).to receive(:mysql?).and_return(false)
     allow(subject).to receive(:pg?).and_return(true)
+  end
+
+  config.before(:each, statement: true) do |example|
+    config.include_context 'with ::YeSQL::Statement' do
+      example.run
+    end
   end
 end

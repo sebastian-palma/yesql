@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'yesql'
+require 'yesql/common/adapter'
 require 'forwardable'
 
 module ::YeSQL
@@ -8,20 +9,23 @@ module ::YeSQL
     class TransformResult
       extend Forwardable
 
+      include ::YeSQL::Common::Adapter
+
       def initialize(output:, result:)
         @output = output
         @result = result
       end
 
       def call
-        if ::Rails::VERSION::MAJOR == 5
+        if ::Rails::VERSION::MAJOR == 5 && mysql?
           return columns if columns?
           return rows_values if rows?
+          return array_of_symbol_hashes if hash?
         end
 
         return result.public_send(output.to_sym) if columns? || rows?
 
-        array_of_symbol_hashes
+        to_a.map(&:symbolize_keys)
       end
 
       private
