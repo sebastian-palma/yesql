@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
-module YeSQL
+require 'yesql/utils/read'
+
+module ::YeSQL
   module Errors
     module NoBindingsProvidedError
       def validate_statement_bindings(binds, file_path)
         return unless statement_binds(file_path).size.positive?
 
         format(MESSAGE, renderable_statement_binds(file_path)).tap do |message|
-          raise ArgumentError, message unless binds.is_a?(Hash) && !binds.empty?
+          raise ::ArgumentError, message unless binds.is_a?(::Hash) && !binds.empty?
         end
       end
 

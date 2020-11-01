@@ -2,7 +2,8 @@
 
 require 'spec_helper'
 require 'yesql/params/output'
-require_relative '../../../minimalmysql/config/environment'
+
+require "#{RSPEC_ROOT}/minimalmysql/config/environment"
 
 describe ::YeSQL::Query::TransformResult do
   describe '.call' do

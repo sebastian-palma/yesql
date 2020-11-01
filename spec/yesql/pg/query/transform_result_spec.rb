@@ -2,10 +2,11 @@
 
 require 'spec_helper'
 require 'yesql/params/output'
-require_relative '../../../minimalpg/config/environment'
+
+require "#{RSPEC_ROOT}/minimalpg/config/environment"
 
 describe ::YeSQL::Query::TransformResult do
-  xdescribe '.call' do
+  describe '.call' do
     subject(:transformed_result) { described_class.new(output: output, result: result).call }
 
     let(:query) { 'SELECT 1 AS foo, 2' }
@@ -15,7 +16,7 @@ describe ::YeSQL::Query::TransformResult do
       context 'when output = "columns"' do
         let(:output) { ::YeSQL::Params::Output.new(:columns) }
 
-        it { expect(transformed_result).to eq(%w[foo 2]) }
+        it { expect(transformed_result).to eq(%w[foo ?column?]) }
       end
     end
 
@@ -24,7 +25,7 @@ describe ::YeSQL::Query::TransformResult do
         let(:output) { ::YeSQL::Params::Output.new(:hash) }
 
         # rubocop:disable Style/HashSyntax
-        it { expect(transformed_result).to eq([{ foo: 1, :'2' => 2 }]) }
+        it { expect(transformed_result).to eq([{ foo: 1, :'?column?' => 2 }]) }
         # rubocop:enable Style/HashSyntax
       end
     end

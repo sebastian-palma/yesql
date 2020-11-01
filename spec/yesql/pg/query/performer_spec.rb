@@ -2,8 +2,9 @@
 
 require 'spec_helper'
 require 'yesql/query/performer'
-require 'yesql/bindings/binder'
-require_relative '../../../minimalpg/config/environment'
+require 'yesql/statement'
+
+require "#{RSPEC_ROOT}/minimalpg/config/environment"
 
 describe ::YeSQL::Query::Performer, :pg do
   describe '.call' do
@@ -29,7 +30,7 @@ describe ::YeSQL::Query::Performer, :pg do
     end
 
     let(:bindings) { { from_date: '2020-02-01', current_site: 'af', site: 'cl' } }
-    let(:bind_statement) { ::YeSQL::Bindings::Binder.bind_statement(file_path, bindings) }
+    let(:bind_statement) { ::YeSQL::Statement.new(bindings, file_path) }
     let(:article_stat) do
       ArticleStat.create(site: bindings[:site], logdate: bindings[:from_date], pageviews: 123)
     end
@@ -201,7 +202,7 @@ describe ::YeSQL::Query::Performer, :pg do
               ActiveRecord::Base.connection.execute(
                 'SELECT statement FROM pg_prepared_statements'
               ).values
-            ).to eq([[::YeSQL::Bindings::Binder.bind_statement(file_path, bindings)]])
+            ).to eq([[bind_statement.bound]])
           end
         end
       end

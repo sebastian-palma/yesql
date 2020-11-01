@@ -2,8 +2,9 @@
 
 require 'spec_helper'
 require 'yesql/query/performer'
-require 'yesql/bindings/binder'
-require_relative '../../../minimalmysql/config/environment'
+require 'yesql/statement'
+
+require "#{RSPEC_ROOT}/minimalmysql/config/environment"
 
 describe ::YeSQL::Query::Performer, :mysql do
   describe '.call' do
@@ -32,7 +33,7 @@ describe ::YeSQL::Query::Performer, :mysql do
     end
 
     let(:bindings) { { from_date: '2021-02-01', current_site: 'af', site: 'cl' } }
-    let(:bind_statement) { ::YeSQL::Bindings::Binder.bind_statement(file_path, bindings) }
+    let(:bind_statement) { ::YeSQL::Statement.new(bindings, file_path) }
     let(:article_stat) do
       ArticleStat.create(site: bindings[:site], logdate: bindings[:from_date], pageviews: 123)
     end
